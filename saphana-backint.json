@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "2.2",
+  "description": "a simple document to backup a HANA database using HDBSQL using Backint, with one tenant database.",
+  "parameters": {
+    "BackupType": {
+      "description": "Backup type, either full, differential, incremental.",
+      "type": "String",
+      "allowedValues": [
+        "full",
+        "incremental",
+        "differential"
+      ],
+      "default": "full"
+    },
+    "SystemID": {
+      "description": "SAP HANA system ID, for example HDB",
+      "type": "String",
+      "allowedPattern": "\\b.{3}\\b",
+      "default": "HDB"
+    },
+    "TenantSID": {
+      "description": "SAP HANA Tenant database system ID, may be the same as SID",
+      "type": "String",
+      "allowedPattern": "\\b.{3}\\b",
+      "default": "HDB"
+    }
+  },
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "backupHANA",
+      "inputs": {
+        "runCommand": [
+          "BTYPE=$(echo {{BackupType}} | sed -e 's/full//; s/differential/DIFFERENTIAL/; s/incremental/INCREMENTAL/')",
+          "echo Executing {{BackupType}} backup with command $BTYPE",
+          "echo \"BACKUP DATA $BTYPE USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/SYSTEMDB/SystemDB_{{BackupType}}_backup')\"",
+          "sudo -u hdbadm -i hdbsql -U SYSTEM \"BACKUP DATA $BTYPE USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/SYSTEMDB/SystemDB_{{BackupType}}_backup')\"",
+          "echo \"BACKUP DATA $BTYPE FOR {{TenantSID}} USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/DB_{{TenantSID}}/{{TenantSID}}_{{BackupType}}_backup')\"",
+          "sudo -u hdbadm -i hdbsql -U SYSTEM \"BACKUP DATA $BTYPE FOR {{TenantSID}} USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/DB_{{TenantSID}}/{{TenantSID}}_{{BackupType}}_backup')\""
+        ]
+      }
+    }
+  ]
+}
