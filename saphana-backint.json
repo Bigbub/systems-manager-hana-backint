@@ -17,12 +17,6 @@
       "type": "String",
       "allowedPattern": "\\b.{3}\\b",
       "default": "HDB"
-    },
-    "TenantSID": {
-      "description": "SAP HANA Tenant database system ID, may be the same as SID",
-      "type": "String",
-      "allowedPattern": "\\b.{3}\\b",
-      "default": "HDB"
     }
   },
   "mainSteps": [
@@ -33,10 +27,12 @@
         "runCommand": [
           "BTYPE=$(echo {{BackupType}} | sed -e 's/full//; s/differential/DIFFERENTIAL/; s/incremental/INCREMENTAL/')",
           "echo Executing {{BackupType}} backup with command $BTYPE",
+          "SID={{SystemID}}",
+          "SIDuser=${SID,,}adm",
           "echo \"BACKUP DATA $BTYPE USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/SYSTEMDB/SystemDB_{{BackupType}}_backup')\"",
-          "sudo -u hdbadm -i hdbsql -U SYSTEM \"BACKUP DATA $BTYPE USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/SYSTEMDB/SystemDB_{{BackupType}}_backup')\"",
-          "echo \"BACKUP DATA $BTYPE FOR {{TenantSID}} USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/DB_{{TenantSID}}/{{TenantSID}}_{{BackupType}}_backup')\"",
-          "sudo -u hdbadm -i hdbsql -U SYSTEM \"BACKUP DATA $BTYPE FOR {{TenantSID}} USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/DB_{{TenantSID}}/{{TenantSID}}_{{BackupType}}_backup')\""
+          "sudo -u $SIDuser -i hdbsql -U SYSTEM \"BACKUP DATA $BTYPE USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/SYSTEMDB/SystemDB_{{BackupType}}_backup')\"",
+          "echo \"BACKUP DATA $BTYPE FOR {{SystemID}} USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/DB_{{SystemID}}/{{SystemID}}_{{BackupType}}_backup')\"",
+          "sudo -u $SIDuser -i hdbsql -U SYSTEM \"BACKUP DATA $BTYPE FOR {{SystemID}} USING BACKINT ('/usr/sap/{{SystemID}}/SYS/global/hdb/backint/DB_{{SystemID}}/{{SystemID}}_{{BackupType}}_backup')\""
         ]
       }
     }
